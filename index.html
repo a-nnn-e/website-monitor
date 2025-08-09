@@ -861,6 +861,82 @@
         
         // Make it globally accessible for button clicks
         window.monitor = monitor;
+
+        // API endpoint handling
+        window.addEventListener('load', async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const action = urlParams.get('action');
+            
+            if (action === 'check') {
+                // Hide the UI and return JSON
+                document.body.innerHTML = '<div style="padding: 20px;">Running checks...</div>';
+                
+                const results = {
+                    status: 'success',
+                    timestamp: new Date().toISOString(),
+                    changes: [],
+                    summary: {
+                        totalMonitors: monitor.monitors.length,
+                        changesFound: 0,
+                        newPages: 0
+                    }
+                };
+
+                try {
+                    for (const monitorConfig of monitor.monitors) {
+                        const checkResult = await monitor.checkMonitor(monitorConfig);
+                        
+                        if (checkResult.changes && checkResult.changes.length > 0) {
+                            checkResult.changes.forEach(change => {
+                                results.changes.push({
+                                    monitorId: monitorConfig.id,
+                                    url: monitorConfig.url,
+                                    name: monitorConfig.name,
+                                    type: change.type,
+                                    changeType: change.changeType,
+                                    timestamp: checkResult.timestamp,
+                                    details: change.details,
+                                    changeUrl: change.url || monitorConfig.url
+                                });
+                            });
+                            
+                            results.summary.changesFound += checkResult.changes.length;
+                            if (checkResult.changes.some(c => c.changeType === 'page')) {
+                                results.summary.newPages += checkResult.changes.filter(c => c.changeType === 'page').length;
+                            }
+                        }
+                    }
+
+                    monitor.saveData();
+                    
+                    // Return pure JSON
+                    document.body.innerHTML = `<pre>${JSON.stringify(results, null, 2)}</pre>`;
+                    
+                } catch (error) {
+                    document.body.innerHTML = `<pre>${JSON.stringify({
+                        status: 'error',
+                        error: error.message,
+                        timestamp: new Date().toISOString()
+                    }, null, 2)}</pre>`;
+                }
+            } else if (action === 'status') {
+                // Return status information
+                const status = {
+                    status: 'online',
+                    timestamp: new Date().toISOString(),
+                    monitors: monitor.monitors.map(m => ({
+                        id: m.id,
+                        name: m.name,
+                        url: m.url,
+                        lastChecked: m.lastChecked,
+                        checkType: m.checkType
+                    })),
+                    totalMonitors: monitor.monitors.length
+                };
+                
+                document.body.innerHTML = `<pre>${JSON.stringify(status, null, 2)}</pre>`;
+            }
+        });
     </script>
 </body>
 </html>
