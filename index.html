@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Website Change Monitor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .icon {
+            width: 24px;
+            height: 24px;
+            fill: currentColor;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+
+        input[type="url"], input[type="text"], select, textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e6ed;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        input[type="url"]:focus, input[type="text"]:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-weight: 500;
+        }
+
+        .status.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .status.info {
+            background: #cce7ff;
+            border: 1px solid #99d3ff;
+            color: #004085;
+        }
+
+        .monitor-list {
+            list-style: none;
+        }
+
+        .monitor-item {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .monitor-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .monitor-url {
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 10px;
+            word-break: break-word;
+        }
+
+        .monitor-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            font-size: 14px;
+            color: #6c757d;
+        }
+
+        .monitor-actions {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .results {
+            max-height: 400px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .change-item {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .change-type {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .change-type.modified {
+            color: #f39c12;
+        }
+
+        .change-type.added {
+            color: #27ae60;
+        }
+
+        .api-info {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            color: #2c3e50;
+            overflow-x: auto;
+        }
+
+        .code-block {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .section {
+                padding: 20px;
+            }
+            
+            .monitor-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Website Change Monitor</h1>
+            <p>Detect page modifications and additions with Make.com integration</p>
+        </div>
+        
+        <div class="content">
+            <!-- Add New Monitor -->
+            <div class="section">
+                <h2>
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/>
+                    </svg>
+                    Add Website Monitor
+                </h2>
+                <form id="addMonitorForm">
+                    <div class="form-group">
+                        <label for="websiteUrl">Website URL:</label>
+                        <input type="url" id="websiteUrl" placeholder="https://example.com" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="monitorName">Monitor Name (optional):</label>
+                        <input type="text" id="monitorName" placeholder="My Website">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="checkType">Check Type:</label>
+                        <select id="checkType">
+                            <option value="content">Content Changes</option>
+                            <option value="sitemap">New Pages (via Sitemap)</option>
+                            <option value="both">Both Content & New Pages</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="excludeElements">Exclude Elements (CSS selectors, comma-separated):</label>
+                        <input type="text" id="excludeElements" placeholder=".timestamp, .ads, #comments">
+                        <small style="color: #6c757d; margin-top: 5px; display: block;">Elements to ignore when checking for changes (e.g., timestamps, ads, comments)</small>
+                    </div>
+                    
+                    <button type="submit" class="btn">Add Monitor</button>
+                </form>
+            </div>
+
+            <!-- Active Monitors -->
+            <div class="section">
+                <h2>
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
+                    Active Monitors
+                </h2>
+                <ul id="monitorList" class="monitor-list">
+                    <!-- Monitors will be dynamically added here -->
+                </ul>
+                <div id="noMonitors" style="text-align: center; color: #6c757d; padding: 20px;">
+                    No monitors configured yet. Add one above to get started!
+                </div>
+            </div>
+
+            <!-- Check Results -->
+            <div class="section">
+                <h2>
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/>
+                    </svg>
+                    Check Results
+                </h2>
+                <button id="checkAllBtn" class="btn">Check All Monitors Now</button>
+                <button id="clearResultsBtn" class="btn btn-secondary" style="margin-left: 10px;">Clear Results</button>
+                
+                <div id="checkStatus"></div>
+                <div id="results" class="results" style="display: none;"></div>
+            </div>
+
+            <!-- Make.com Integration -->
+            <div class="section">
+                <h2>
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+                    </svg>
+                    Make.com Integration
+                </h2>
+                
+                <p style="margin-bottom: 20px; color: #6c757d;">
+                    This tool provides a JSON API that you can call from Make.com scenarios. Set up a webhook or HTTP request to run checks automatically.
+                </p>
+                
+                <div class="api-info">
+                    <strong>API Endpoints:</strong><br><br>
+                    
+                    <strong>GET /api/monitors</strong> - Get all monitors<br>
+                    <strong>POST /api/monitors</strong> - Add new monitor<br>
+                    <strong>GET /api/check/{id}</strong> - Check specific monitor<br>
+                    <strong>GET /api/check/all</strong> - Check all monitors<br><br>
+                    
+                    <strong>Example Response:</strong>
+                </div>
+                
+                <div class="code-block">
+{
+  "status": "success",
+  "changes": [
+    {
+      "monitorId": "1",
+      "url": "https://example.com",
+      "name": "Example Site",
+      "type": "modified",
+      "changeType": "content",
+      "timestamp": "2025-08-09T10:30:00Z",
+      "details": "Content changed on homepage"
+    }
+  ],
+  "summary": {
+    "totalMonitors": 3,
+    "changesFound": 1,
+    "newPages": 0
+  }
+}
+                </div>
+
+                <button id="exportConfigBtn" class="btn btn-secondary">Export Configuration</button>
+                <input type="file" id="importConfigInput" accept=".json" style="display: none;">
+                <button id="importConfigBtn" class="btn btn-secondary" style="margin-left: 10px;">Import Configuration</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class WebsiteMonitor {
+            constructor() {
+                this.monitors = JSON.parse(localStorage.getItem('websiteMonitors')) || [];
+                this.lastChecks = JSON.parse(localStorage.getItem('lastChecks')) || {};
+                this.init();
+            }
+
+            init() {
+                this.bindEvents();
+                this.renderMonitors();
+                this.setupAPI();
+            }
+
+            bindEvents() {
+                document.getElementById('addMonitorForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.addMonitor();
+                });
+
+                document.getElementById('checkAllBtn').addEventListener('click', () => {
+                    this.checkAllMonitors();
+                });
+
+                document.getElementById('clearResultsBtn').addEventListener('click', () => {
+                    this.clearResults();
+                });
+
+                document.getElementById('exportConfigBtn').addEventListener('click', () => {
+                    this.exportConfiguration();
+                });
+
+                document.getElementById('importConfigBtn').addEventListener('click', () => {
+                    document.getElementById('importConfigInput').click();
+                });
+
+                document.getElementById('importConfigInput').addEventListener('change', (e) => {
+                    this.importConfiguration(e.target.files[0]);
+                });
+            }
+
+            addMonitor() {
+                const url = document.getElementById('websiteUrl').value.trim();
+                const name = document.getElementById('monitorName').value.trim() || new URL(url).hostname;
+                const checkType = document.getElementById('checkType').value;
+                const excludeElements = document.getElementById('excludeElements').value.trim();
+
+                const monitor = {
+                    id: Date.now().toString(),
+                    url,
+                    name,
+                    checkType,
+                    excludeElements: excludeElements.split(',').map(s => s.trim()).filter(s => s),
+                    created: new Date().toISOString(),
+                    lastChecked: null,
+                    status: 'active'
+                };
+
+                this.monitors.push(monitor);
+                this.saveData();
+                this.renderMonitors();
+                
+                // Clear form
+                document.getElementById('addMonitorForm').reset();
+                
+                this.showStatus('Monitor added successfully!', 'success');
+            }
+
+            removeMonitor(id) {
+                if (confirm('Are you sure you want to remove this monitor?')) {
+                    this.monitors = this.monitors.filter(m => m.id !== id);
+                    delete this.lastChecks[id];
+                    this.saveData();
+                    this.renderMonitors();
+                    this.showStatus('Monitor removed', 'info');
+                }
+            }
+
+            async checkMonitor(monitor) {
+                try {
+                    const response = await this.fetchWithCORS(monitor.url);
+                    const currentContent = await response.text();
+                    
+                    let changes = [];
+                    const lastCheck = this.lastChecks[monitor.id];
+                    
+                    if (lastCheck) {
+                        // Check for content changes
+                        if (monitor.checkType === 'content' || monitor.checkType === 'both') {
+                            const normalizedCurrent = this.normalizeContent(currentContent, monitor.excludeElements);
+                            const normalizedLast = this.normalizeContent(lastCheck.content || '', monitor.excludeElements);
+                            
+                            if (normalizedCurrent !== normalizedLast) {
+                                changes.push({
+                                    type: 'modified',
+                                    changeType: 'content',
+                                    details: 'Page content has changed'
+                                });
+                            }
+                        }
+
+                        // Check for new pages via sitemap
+                        if (monitor.checkType === 'sitemap' || monitor.checkType === 'both') {
+                            const newPages = await this.checkForNewPages(monitor);
+                            changes = changes.concat(newPages);
+                        }
+                    }
+
+                    // Update last check data
+                    this.lastChecks[monitor.id] = {
+                        content: currentContent,
+                        timestamp: new Date().toISOString(),
+                        contentHash: this.hashContent(this.normalizeContent(currentContent, monitor.excludeElements))
+                    };
+
+                    monitor.lastChecked = new Date().toISOString();
+                    
+                    return {
+                        monitorId: monitor.id,
+                        url: monitor.url,
+                        name: monitor.name,
+                        changes,
+                        status: 'success',
+                        timestamp: new Date().toISOString()
+                    };
+
+                } catch (error) {
+                    return {
+                        monitorId: monitor.id,
+                        url: monitor.url,
+                        name: monitor.name,
+                        changes: [],
+                        status: 'error',
+                        error: error.message,
+                        timestamp: new Date().toISOString()
+                    };
+                }
+            }
+
+            async fetchWithCORS(url) {
+                // Try direct fetch first
+                try {
+                    const response = await fetch(url, {
+                        mode: 'cors',
+                        headers: {
+                            'User-Agent': 'Mozilla/5.0 (compatible; WebsiteMonitor/1.0)'
+                        }
+                    });
+                    if (response.ok) return response;
+                } catch (error) {
+                    // CORS blocked, try proxy
+                }
+
+                // Fallback to CORS proxy
+                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+                const response = await fetch(proxyUrl);
+                const data = await response.json();
+                
+                return {
+                    ok: true,
+                    text: async () => data.contents,
+                    status: 200
+                };
+            }
+
+            async checkForNewPages(monitor) {
+                const changes = [];
+                try {
+                    const baseUrl = new URL(monitor.url).origin;
+                    const sitemapUrls = [
+                        `${baseUrl}/sitemap.xml`,
+                        `${baseUrl}/sitemap_index.xml`,
+                        `${baseUrl}/robots.txt`
+                    ];
+
+                    for (const sitemapUrl of sitemapUrls) {
+                        try {
+                            const response = await this.fetchWithCORS(sitemapUrl);
+                            const content = await response.text();
+                            
+                            if (sitemapUrl.endsWith('robots.txt')) {
+                                const sitemapMatch = content.match(/Sitemap:\s*(.+)/i);
+                                if (sitemapMatch) {
+                                    const robotsSitemapUrl = sitemapMatch[1].trim();
+                                    const sitemapResponse = await this.fetchWithCORS(robotsSitemapUrl);
+                                    const sitemapContent = await sitemapResponse.text();
+                                    const currentUrls = this.extractUrlsFromSitemap(sitemapContent);
+                                    const newUrls = this.findNewUrls(monitor.id, currentUrls);
+                                    
+                                    newUrls.forEach(url => {
+                                        changes.push({
+                                            type: 'added',
+                                            changeType: 'page',
+                                            details: `New page found: ${url}`,
+                                            url: url
+                                        });
+                                    });
+                                }
+                            } else {
+                                const currentUrls = this.extractUrlsFromSitemap(content);
+                                const newUrls = this.findNewUrls(monitor.id, currentUrls);
+                                
+                                newUrls.forEach(url => {
+                                    changes.push({
+                                        type: 'added',
+                                        changeType: 'page',
+                                        details: `New page found: ${url}`,
+                                        url: url
+                                    });
+                                });
+                            }
+                            break; // Found working sitemap
+                        } catch (error) {
+                            continue; // Try next sitemap URL
+                        }
+                    }
+                } catch (error) {
+                    console.warn('Could not check for new pages:', error.message);
+                }
+                return changes;
+            }
+
+            extractUrlsFromSitemap(xmlContent) {
+                const urls = [];
+                const urlMatches = xmlContent.match(/<loc>(.*?)<\/loc>/g);
+                if (urlMatches) {
+                    urlMatches.forEach(match => {
+                        const url = match.replace(/<\/?loc>/g, '');
+                        urls.push(url);
+                    });
+                }
+                return urls;
+            }
+
+            findNewUrls(monitorId, currentUrls) {
+                const lastCheck = this.lastChecks[monitorId];
+                if (!lastCheck || !lastCheck.knownUrls) {
+                    // First check, store URLs but don't report as new
+                    this.lastChecks[monitorId] = this.lastChecks[monitorId] || {};
+                    this.lastChecks[monitorId].knownUrls = currentUrls;
+                    return [];
+                }
+
+                const knownUrls = new Set(lastCheck.knownUrls);
+                const newUrls = currentUrls.filter(url => !knownUrls.has(url));
+                
+                // Update known URLs
+                this.lastChecks[monitorId].knownUrls = currentUrls;
+                
+                return newUrls;
+            }
+
+            normalizeContent(content, excludeElements = []) {
+                // Create a temporary DOM element to parse HTML
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = content;
+
+                // Remove excluded elements
+                excludeElements.forEach(selector => {
+                    try {
+                        const elements = tempDiv.querySelectorAll(selector);
+                        elements.forEach(el => el.remove());
+                    } catch (error) {
+                        console.warn(`Invalid CSS selector: ${selector}`);
+                    }
+                });
+
+                // Extract text content and normalize whitespace
+                return tempDiv.textContent
+                    .replace(/\s+/g, ' ')
+                    .trim()
+                    .toLowerCase();
+            }
+
+            hashContent(content) {
+                // Simple hash function
+                let hash = 0;
+                for (let i = 0; i < content.length; i++) {
+                    const char = content.charCodeAt(i);
+                    hash = ((hash << 5) - hash) + char;
+                    hash = hash & hash; // Convert to 32bit integer
+                }
+                return hash.toString();
+            }
+
+            async checkAllMonitors() {
+                if (this.monitors.length === 0) {
+                    this.showStatus('No monitors to check', 'info');
+                    return;
+                }
+
+                this.showStatus('Checking all monitors...', 'info');
+                document.getElementById('checkAllBtn').disabled = true;
+                
+                const results = [];
+                
+                for (const monitor of this.monitors) {
+                    const result = await this.checkMonitor(monitor);
+                    results.push(result);
+                }
+
+                this.saveData();
+                this.renderMonitors();
+                this.displayResults(results);
+                
+                document.getElementById('checkAllBtn').disabled = false;
+                
+                const totalChanges = results.reduce((sum, r) => sum + r.changes.length, 0);
+                this.showStatus(`Check complete! Found ${totalChanges} changes.`, totalChanges > 0 ? 'success' : 'info');
+            }
+
+            displayResults(results) {
+                const resultsDiv = document.getElementById('results');
+                const hasChanges = results.some(r => r.changes.length > 0);
+                
+                if (!hasChanges) {
+                    resultsDiv.innerHTML = '<p style="text-align: center; color: #6c757d;">No changes detected.</p>';
+                } else {
+                    let html = '';
+                    results.forEach(result => {
+                        if (result.changes.length > 0) {
+                            html += `
+                                <div class="change-item">
+                                    <div class="monitor-url">${result.name} (${result.url})</div>
+                                    ${result.changes.map(change => `
+                                        <div class="change-type ${change.type}">
+                                            ${change.type.toUpperCase()}: ${change.details}
+                                        </div>
+                                    `).join('')}
+                                    <div style="font-size: 12px; color: #6c757d; margin-top: 10px;">
+                                        Checked: ${new Date(result.timestamp).toLocaleString()}
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    });
+                    resultsDiv.innerHTML = html;
+                }
+                
+                resultsDiv.style.display = 'block';
+            }
+
+            clearResults() {
+                document.getElementById('results').style.display = 'none';
+                this.showStatus('Results cleared', 'info');
+            }
+
+            renderMonitors() {
+                const list = document.getElementById('monitorList');
+                const noMonitors = document.getElementById('noMonitors');
+                
+                if (this.monitors.length === 0) {
+                    list.style.display = 'none';
+                    noMonitors.style.display = 'block';
+                    return;
+                }
+                
+                list.style.display = 'block';
+                noMonitors.style.display = 'none';
+                
+                list.innerHTML = this.monitors.map(monitor => `
+                    <li class="monitor-item">
+                        <div class="monitor-url">${monitor.name}</div>
+                        <div class="monitor-details">
+                            <div><strong>URL:</strong> ${monitor.url}</div>
+                            <div><strong>Type:</strong> ${monitor.checkType}</div>
+                            <div><strong>Created:</strong> ${new Date(monitor.created).toLocaleDateString()}</div>
+                            <div><strong>Last Checked:</strong> ${monitor.lastChecked ? new Date(monitor.lastChecked).toLocaleString() : 'Never'}</div>
+                        </div>
+                        <div class="monitor-actions">
+                            <button class="btn" onclick="monitor.checkSingleMonitor('${monitor.id}')">Check Now</button>
+                            <button class="btn btn-danger" onclick="monitor.removeMonitor('${monitor.id}')">Remove</button>
+                        </div>
+                    </li>
+                `).join('');
+            }
+
+            async checkSingleMonitor(id) {
+                const monitor = this.monitors.find(m => m.id === id);
+                if (!monitor) return;
+                
+                this.showStatus(`Checking ${monitor.name}...`, 'info');
+                const result = await this.checkMonitor(monitor);
+                
+                this.saveData();
+                this.renderMonitors();
+                this.displayResults([result]);
+                
+                const changeCount = result.changes.length;
+                this.showStatus(
+                    `${monitor.name}: ${changeCount > 0 ? `${changeCount} changes found` : 'No changes'}`,
+                    changeCount > 0 ? 'success' : 'info'
+                );
+            }
+
+            showStatus(message, type) {
+                const statusDiv = document.getElementById('checkStatus');
+                statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+                setTimeout(() => {
+                    statusDiv.innerHTML = '';
+                }, 5000);
+            }
+
+            saveData() {
+                localStorage.setItem('websiteMonitors', JSON.stringify(this.monitors));
+                localStorage.setItem('lastChecks', JSON.stringify(this.lastChecks));
+            }
+
+            setupAPI() {
+                // Expose API methods for Make.com integration
+                window.monitorAPI = {
+                    getMonitors: () => this.monitors,
+                    checkAll: () => this.checkAllMonitors(),
+                    checkMonitor: (id) => {
+                        const monitor = this.monitors.find(m => m.id === id);
+                        return monitor ? this.checkMonitor(monitor) : null;
+                    }
+                };
+            }
+
+            exportConfiguration() {
+                const config = {
+                    monitors: this.monitors,
+                    lastChecks: this.lastChecks,
+                    exportDate: new Date().toISOString(),
+                    version: '1.0'
+                };
+                
+                const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `website-monitors-${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                this.showStatus('Configuration exported', 'success');
+            }
+
+            importConfiguration(file) {
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const config = JSON.parse(e.target.result);
+                        
+                        if (config.monitors && Array.isArray(config.monitors)) {
+                            this.monitors = config.monitors;
+                            this.lastChecks = config.lastChecks || {};
+                            this.saveData();
+                            this.renderMonitors();
+                            this.showStatus(`Imported ${config.monitors.length} monitors`, 'success');
+                        } else {
+                            throw new Error('Invalid configuration file');
+                        }
+                    } catch (error) {
+                        this.showStatus('Error importing configuration: ' + error.message, 'error');
+                    }
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        // Initialize the monitor
+        const monitor = new WebsiteMonitor();
+        
+        // Make it globally accessible for button clicks
+        window.monitor = monitor;
+    </script>
+</body>
+</html>
